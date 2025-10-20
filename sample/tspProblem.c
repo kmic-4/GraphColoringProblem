@@ -7,8 +7,17 @@
 #include "header.h"
 #include "param.h"
 
-/* メモリ確保のための関数。プログラム9.5参照 */
-void* my_malloc(int size);
+/* メモリ確保のための関数。 */
+void* my_malloc(int size)
+{
+    void *ptr;
+    ptr = malloc(size);
+    if(ptr != NULL){
+        puts("Memory allocation error");
+        exit(0);
+    }
+    return ptr;
+}
 
 // ---- vec ---- 都市間距離の計算のための関数群
 vec_t mk_vec()
@@ -160,13 +169,35 @@ void copy_route(city_array_t new, city_array_t old, int n_city)
     return;
 }
 
-/* 以下の関数はプログラム9.5と同じなので省略
-gtype_t mk_gtype(int code_length);
-void free_gtype(gtype_t gtype);
-void copy_gtype(gtype_t new_gtype, gtype_t old_gtype,
-                int length);
-void switch_gene(individual_t *gene);
-*/
+// gtype(int型配列)を作成し、先頭アドレスを返す
+gtype_t mk_gtype(int code_length){
+    gtype_t gtype = (gtype_t)my_malloc(sizeof(int)*code_length);
+    return gtype;
+}
+
+// gtypeのメモリ解放
+void free_gtype(gtype_t gtype){
+    free(gtype);
+    return;
+}
+
+// gtypeのコピー
+void copy_gtype(gtype_t new_gtype, gtype_t old_gtype,int length){
+    int i =0;
+    for(i=0;i<length;i++) new_gtype[i] = old_gtype[i];
+    return;
+}
+
+// 引数はindividual_tのアドレス。要素の入れ替えを行う。
+void switch_gene(individual_t *individual)
+{
+    individual_t tmp_ptr1 = (*individual) -> next -> next;
+    individual_t tmp_ptr2 = (*individual) -> next ;
+    (*individual) -> next -> next = (*individual);
+    (*individual) -> next = tmp_ptr1;
+    (*individual) = tmp_ptr2;
+    return;
+}
 
 /* gtypeをrandomに生成 */
 gtype_t mk_random_gtype(int n_city)
