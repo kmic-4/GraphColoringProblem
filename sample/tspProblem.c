@@ -224,7 +224,7 @@ void decode_gtype(city_array_t route, gtype_t gtype, int n_city)
     return;
 }
 
-/* 交叉の関数は3.7節で説明したものと同じなので省略
+/* 省略
 int cross_gtype(gtype_t gtype1, gtype_t gtype2, int length);
 */
 
@@ -388,17 +388,18 @@ void print_fitness(ga_population_t population)
     return;
 }
 
-/* 適合度を比較する関数 9.2.4節で説明したので省略
+/* 省略
 int less_than(individual_t individualA,
               individual_t individualB);
 */
 
-/* 選択を実行する関数 9.2.3節で説明したので省略
-void calc_pselect(ga_population_t population);
-individual_t select_parent_roulette(ga_population_t population);
-individual_t select_parent_tournament(
-    ga_population_t population, int tournament_size);
-*/
+// 省略
+// void calc_pselect(ga_population_t population);
+// 省略
+// individual_t select_parent_roulette(ga_population_t population);
+// 省略
+// individual_t select_parent_tournament(ga_population_t population, int tournament_size);
+
 
 /* 適合度計算 TSP 問題用
 gtypeからptypeへの変換、fitnessの計算を行う
@@ -435,10 +436,11 @@ void calc_fitness(ga_population_t population, city_t *cities)
     return;
 }
 
-/* 以下の関数はプログラム9.5と同じなので省略
-individual_t select_parent(ga_population_t population);
-void normalize_population(ga_population_t population);
-*/
+//省略
+// individual_t select_parent(ga_population_t population);
+// 省略
+// void normalize_population(ga_population_t population);
+
 
 /* 新しい世代の生成
 new_populationのメモリ領域はすでに確保してあるとする
