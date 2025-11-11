@@ -224,14 +224,27 @@ void decode_gtype(city_array_t route, gtype_t gtype, int n_city)
     return;
 }
 
-/* 省略
-int cross_gtype(gtype_t gtype1, gtype_t gtype2, int length);
+/*　交差点を返す
+   gtype1とgtype2を交叉させる
+　 int cross_gtype(gtype_t gtype1, gtype_t gtype2, int length);
 */
+int cross_gtype(gtype_t gtype1, gtype_t gtype2, int length){
+    int cross_point = rand() % (length -1); 
+    int i = cross_point + 1;
+    int tmp;
+    while(i < length){
+        tmp = gtype1[i];
+        gtype1[i] = gtype2[i];
+        gtype2[i] = tmp;
+        i++;
+    }
+    return cross_point;
+};
 
 /* gtypeの突然変異 :: 突然変異が起こった回数を返す
    確率pmで突然変異を起こす。複数回可。
 */
-/* mutate_gtype 関数の引数が fx.c と異なる : code_max を使わない */
+/* 突然変異。mutate_gtype 関数の引数が fx.c と異なる : code_max を使わない */
 int mutate_gtype(gtype_t gtype, int length, double pm)
 {
     // エラー処理
@@ -388,18 +401,100 @@ void print_fitness(ga_population_t population)
     return;
 }
 
-/* 省略
-int less_than(individual_t individualA,
-              individual_t individualB);
-*/
+/* 適合度の比較*/
+int less_than(individual_t individualA,individual_t individualB){
+    return (individualA->fitness < individualB->fitness);
+};
 
-// 省略
-// void calc_pselect(ga_population_t population);
-// 省略
-// individual_t select_parent_roulette(ga_population_t population);
-// 省略
-// individual_t select_parent_tournament(ga_population_t population, int tournament_size);
+// 適合度計算
+void calc_fitness(ga_population_t population,double value_min, double value_max)
+{
+    individual_t ptr = population->genes;
+    individual_t next;
+    individual_t individual_ptr = NULL;
+    individual_t search_ptr = ptr;
+    double x,y;
 
+    while(ptr != NULL){
+        x = decode_gtype(ptr->gtype,population->code_length,
+                         value_min,value_max);
+        ptr->ptype = x;
+        y = F_X;
+        ptr->fitness = G_Y;
+        next = ptr->next;
+        ptr->next = NULL;
+
+        // 適合度順に線形リストに挿入
+        search_ptr = individual_ptr;
+        if( search_ptr == NULL || less_than(individual_ptr, ptr)){
+            ptr->next = individual_ptr;
+            individual_ptr = ptr;
+        } else {
+            while(search_ptr->next != NULL){
+                if(less_than(search_ptr->next, ptr)) break;
+                search_ptr = search_ptr->next;
+            }
+            ptr->next = search_ptr->next;
+            search_ptr->next = ptr;
+        }
+        ptr = next;
+    }
+    population->genes = individual_ptr;
+    return;
+}
+
+// 選択を実行する関数
+void calc_pselect(ga_population_t population)
+{
+    int i;
+    population->pselect[0] = population->genes->fitness;
+    individual_t gene_ptr = population->genes->next;
+    for (i=1; i < population->population_size; i++){
+        population->pselect[i] =
+            population->pselect[i-1] + gene_ptr->fitness;
+        gene_ptr = gene_ptr->next;
+    }
+
+    for (i=0;i< population->population_size;i++){
+        population->pselect[i] /=
+            population->pselect[population->population_size-1];
+    }
+    return;
+}
+
+/* ルーレット方式による親選択 */
+individual_t select_parent_roulette(ga_population_t population)
+{
+    int j=0;
+    double r;
+    individual_t parent;
+
+    r = (double)rand()/RAND_MAX;
+    parent = population->genes;
+    while (r > population->pselect[j]){
+        parent = parent->next;
+        j++;
+    }
+    return parent;
+}
+
+/* トーナメント方式による親選択 */
+individual_t select_parent_tournament(
+    ga_population_t population, int tournament_size)
+{
+    int pop = population->population_size;
+    int i,j,r,min = pop;
+    individual_t min_selected = NULL;
+    individual_t ptr;
+    for(i=0;i<tournament_size;i++){
+        r = rand() % pop;
+        if(min > r) min = r;
+    }
+    ptr = population->genes;
+    for(j=0;j<min;j++) ptr = ptr->next;
+    min_selected = ptr;
+    return min_selected;
+}
 
 /* 適合度計算 TSP 問題用
 gtypeからptypeへの変換、fitnessの計算を行う
