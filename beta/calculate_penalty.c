@@ -6,9 +6,10 @@
 #include "definition.h"
 #include "functions.h"
 
-int calculatePenalty(const GraphStructure *graph, Individual *individual, int discountRate)
+int calculatePenalty(const GraphStructure *graph, Individual *individual)
 {
     int illegalPairAmount = 0;
+    int discountRate = 2; //　論文では、q(u,v)はcolor(u)=color(v)の場合に2を返すとされている
     int numVertices = graph->numberOfVertices;
 
     int *colors = individual->colorChromosome;
@@ -58,7 +59,10 @@ int calculatePenalty(const GraphStructure *graph, Individual *individual, int di
     }
 
     /* ペナルティ値算出 */
-    int penalty = illegalPairAmount * discountRate;
+    if (illegalPairAmount == 0) {
+        return 0; // 違法ペアがなければペナルティ0
+    }
+    int penalty = illegalPairAmount * discountRate + 1; // 元論文で、illegalPairAmount>0であれば加算されているdが1になっている
 
     return penalty;
 }

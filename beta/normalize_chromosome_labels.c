@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "definition.h"
+#include "functions.h"
 
 void normalize_chromosome_labels(Individual *individual) {
     if (individual == NULL || individual->colorChromosome == NULL) {

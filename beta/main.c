@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <omp.h>
 #include "definition.h"
 #include "functions.h"
+
 
 int main(int argc, char *argv[])
 {
@@ -10,8 +12,8 @@ int main(int argc, char *argv[])
 
     mutationRate    = atof(argv[1]);
     crossoverRate   = atof(argv[2]);
-    popSize           = atoi(argv[3]);
-    maxGenerations    = atoi(argv[4]);
+    populationSize  = atoi(argv[3]);
+    maxGenerations  = atoi(argv[4]);
 
 
     //**データの取得**//
@@ -27,6 +29,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    //並列化開始
+    omp_set_num_threads(8);
+
+    #pragma omp parallel for schedule(dynamic)
+    for (long i = 0; i < maxGenerations; i++) {　// maxGenerations世代分交叉
+        ...
+    }
 
    //** **//
 
