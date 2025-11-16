@@ -1,0 +1,1 @@
+- Indivisualに違法な塗分けの辺がある場所を格納する配列を追加する。その配列を初期化する機能をcalculate_penartyに追加。
