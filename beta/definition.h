@@ -1,43 +1,43 @@
 #ifndef DEFINITION_H
 #define DEFINITION_H
 
-#define REQUIRED_COLORS_FOR_SUCCESS 4     // 4色問題であります
-#define MAX_COLOR_LABEL 100             
+#define REQUIRED_COLORS_FOR_SUCCESS 4
+#define MAX_COLOR_LABEL 100
+
 extern double mutationRate;
 extern double crossoverRate;
-extern int populationSize;
+extern int islandPopulation; // 島ごとの個体数。偶数であること。
+extern int numberOfIslands;
 extern int maxGenerations;
 
-
-// グラフ構造を表す
+// グラフ構造
 typedef struct {
-    int numberOfVertices;     // グラフが持つ頂点数
-    int **adjacencyMatrix;    // 隣接行列
+    int numberOfVertices;
+    int **adjacencyMatrix;
 } GraphStructure;
 
 
-// int colorChromosome[]; // グラフの状態を持つ遺伝子配列。
-// int fitnessScore; // 適合度スコア
-
-// コンフリクトを起こしている頂点ペア
-typedef struct {
-    int vertexA;
-    int vertexB;
-} ConflictPair;
-
+// 個体構造
 typedef struct {
     int *colorChromosome;
     int fitnessScore;
+    float coloringCost;
     int chromosomeLength;
-    ConflictPair **conflictPairs;  // ConflictPair* の配列（可変長）
+    int *conflictFlags; // 交叉用の衝突確認フラグ
     int conflictPairCount;
 } Individual;
 
-typedef struct { 
-    Individual *individuals;  
-    int populationSize; 
-    int generationIndex;  
-    Individual bestIndividual;  
+// Island（サブポピュレーション）
+typedef struct {
+    Individual *individuals;          // islandPopulation 個
+    Individual islandBestIndividual;  // 最良個体
+} Island;
+
+// 世代（Generation）
+typedef struct {
+    Island *islands;                 // numberOfIslands 個
+    int generationIndex;             // 世代番号
+    Individual globalBestIndividual; // 全体の最良個体
 } Generation;
 
 #endif
