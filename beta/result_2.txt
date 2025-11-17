@@ -1,0 +1,2 @@
+Generation 1 | FitnessScore=4 | ColoringCost=0.000221
+彩色数4の最適個体を発見（世代 1）

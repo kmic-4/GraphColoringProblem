@@ -1,6 +1,9 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include "definition.h"
 #include "functions.h"
 
@@ -17,13 +20,16 @@ static void free_partial_graph(GraphStructure *graph, int allocatedRows) {
 
 GraphStructure *read_graph_csv(FILE *fp)
 {
-    char line[BUFSIZ];
+    char *line = NULL;
+    size_t lineCap = 0;
+    ssize_t lineLen = 0;
     char *token;
+    char *savePtr;
     int n = 0;  // 頂点数
     int i, j;
 
-    /* ---- コメント行(#...) を読み飛ばし、ヘッダ行を取得 ---- */
-    while (fgets(line, BUFSIZ, fp) != NULL) {
+    // コメント行(#...)を読み飛ばし、ヘッダ行を取得
+    while ((lineLen = getline(&line, &lineCap, fp)) != -1) {
         if (line[0] == '#') {
             continue;
         } else {
@@ -31,33 +37,42 @@ GraphStructure *read_graph_csv(FILE *fp)
         }
     }
 
-    if (feof(fp)) {
-        return NULL;    /* ヘッダが存在しない */
-    }
-
-    /* ---- ヘッダ行から頂点数を数える ---- */
-    token = strtok(line, ",\n");  /* 先頭空トークン */
-
-    n = 0;
-    token = strtok(NULL, ",\n");
-    while (token != NULL) {
-        n++;
-        token = strtok(NULL, ",\n");
-    }
-
-    if (n <= 0) {
+    if (lineLen == -1) {
+        fprintf(stderr, "read_graph_csv: ヘッダ行が見つかりません。\n");
+        free(line);
+        // ヘッダが存在しない
         return NULL;
     }
 
-    /* ---- GraphStructure を確保 ---- */
+    // ヘッダ行から頂点数を数える
+    token = strtok_r(line, ",\r\n", &savePtr);  // 先頭空トークン
+
+    n = 0;
+    token = strtok_r(NULL, ",\r\n", &savePtr);
+    while (token != NULL) {
+        n++;
+        token = strtok_r(NULL, ",\r\n", &savePtr);
+    }
+
+    if (n <= 0) {
+        fprintf(stderr, "read_graph_csv: 頂点数が 0 以下です。\n");
+        free(line);
+        return NULL;
+    }
+
+    // GraphStructure を確保
     GraphStructure *graph = (GraphStructure *)malloc(sizeof(GraphStructure));
     if (graph == NULL) {
+        fprintf(stderr, "read_graph_csv: GraphStructure の確保に失敗しました。\n");
+        free(line);
         return NULL;
     }
 
     graph->numberOfVertices = n;
     graph->adjacencyMatrix = (int **)malloc(n * sizeof(int *));
     if (graph->adjacencyMatrix == NULL) {
+        fprintf(stderr, "read_graph_csv: adjacencyMatrix の確保に失敗しました (n=%d)。\n", n);
+        free(line);
         free(graph);
         return NULL;
     }
@@ -65,34 +80,42 @@ GraphStructure *read_graph_csv(FILE *fp)
     for (i = 0; i < n; i++) {
         graph->adjacencyMatrix[i] = (int *)malloc(n * sizeof(int));
         if (graph->adjacencyMatrix[i] == NULL) {
+            fprintf(stderr, "read_graph_csv: 行 %d の確保に失敗しました。\n", i);
+            free(line);
             free_partial_graph(graph, i);
             return NULL;
         }
     }
 
-    /* ---- データ行を読み込み ---- */
+    // データ行を読み込み
     for (i = 0; i < n; i++) {
 
-        if (fgets(line, BUFSIZ, fp) == NULL) {
-            /* 行不足 → エラー扱いで終了 */
+        if ((lineLen = getline(&line, &lineCap, fp)) == -1) {
+            // 行不足 → エラー扱いで終了
+            fprintf(stderr, "read_graph_csv: 頂点 %d 行目を読み込めません。\n", i);
+            free(line);
             free_partial_graph(graph, n);
             return NULL;
         }
 
-        /* 行名（countryX） */
-        token = strtok(line, ",\n");
+        // 行名（countryX）
+        token = strtok_r(line, ",\r\n", &savePtr);
         if (token == NULL) {
-            /* 不正行 → 即終了 */
+            // 不正行 → 即終了
+            fprintf(stderr, "read_graph_csv: 頂点 %d 行目の行名が見つかりません。\n", i);
+            free(line);
             free_partial_graph(graph, n);
             return NULL;
         }
 
-        /* 隣接行列の n 個の値 */
+        // 隣接行列の n 個の値
         for (j = 0; j < n; j++) {
-            token = strtok(NULL, ",\n");
+            token = strtok_r(NULL, ",\r\n", &savePtr);
 
             if (token == NULL) {
-                /* 列が足りない → エラー終了 */
+                // 列が足りない → エラー終了
+                fprintf(stderr, "read_graph_csv: 頂点 %d 行目の列 %d が不足しています。\n", i, j);
+                free(line);
                 free_partial_graph(graph, n);
                 return NULL;
             }
@@ -101,5 +124,6 @@ GraphStructure *read_graph_csv(FILE *fp)
         }
     }
 
+    free(line);
     return graph;
 }

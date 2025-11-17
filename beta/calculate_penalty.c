@@ -10,7 +10,7 @@ int calculate_penalty(const GraphStructure *graph, Individual *individual)
 
     int *colors = individual->colorChromosome;
 
-    /* conflictFlags の初期化 */
+    // conflictFlags を初期化
     if (individual->conflictFlags == NULL) {
         individual->conflictFlags = malloc(sizeof(int) * numVertices);
         if (individual->conflictFlags == NULL) {
@@ -22,7 +22,7 @@ int calculate_penalty(const GraphStructure *graph, Individual *individual)
         individual->conflictFlags[i] = 0;
     }
 
-    /* 隣接ペアを走査して衝突をカウント */
+    // 隣接ペアを走査して衝突をカウント
     for (int i = 0; i < numVertices; i++) {
         for (int j = i + 1; j < numVertices; j++) {
 

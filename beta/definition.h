@@ -38,6 +38,7 @@ typedef struct {
     Island *islands;                 // numberOfIslands 個
     int generationIndex;             // 世代番号
     Individual globalBestIndividual; // 全体の最良個体
+    int numberOfIslands;             // 島の数
 } Generation;
 
 #endif

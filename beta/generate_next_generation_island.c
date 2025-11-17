@@ -5,170 +5,212 @@
 #include "functions.h"
 
 
-// ルーレット選択：coloringCost に比例して個体を選択（方式A）
-static Individual* roulette_select(Individual *inds, int population)
+// 以前使用していたルーレット選択
+// static Individual* roulette_select(Individual *inds, int population)
+// {
+//     double sum = 0.0;
+//
+//     for (int i = 0; i < population; i++) {
+//         double weight = inds[i].coloringCost;
+//         if (weight < 0.0) weight = 0.0;
+//         sum += weight;
+//     }
+//
+//     if (sum <= 0.0) {
+//         return &inds[rand() % population];
+//     }
+//
+//     double r = ((double)rand() / RAND_MAX) * sum;
+//
+//     double acc = 0.0;
+//     for (int i = 0; i < population; i++) {
+//         double weight = inds[i].coloringCost;
+//         if (weight < 0.0) weight = 0.0;
+//         acc += weight;
+//         if (acc >= r) {
+//             return &inds[i];
+//         }
+//     }
+//
+//     return &inds[population - 1];
+// }
+
+#define TOURNAMENT_SIZE 3
+
+static Individual* tournament_select(Individual *inds, int population)
 {
-    double sum = 0.0;
+    Individual *best = NULL;
+    float bestCost = -FLT_MAX;
 
-    for (int i = 0; i < population; i++) {
-        sum += inds[i].coloringCost;
-    }
-
-    double r = ((double)rand() / RAND_MAX) * sum;
-
-    double acc = 0.0;
-    for (int i = 0; i < population; i++) {
-        acc += inds[i].coloringCost;
-        if (acc >= r) {
-            return &inds[i];
+    for (int i = 0; i < TOURNAMENT_SIZE; i++) {
+        int idx = rand() % population;
+        Individual *candidate = &inds[idx];
+        if (candidate->coloringCost > bestCost) {
+            bestCost = candidate->coloringCost;
+            best = candidate;
         }
     }
 
-    /* 理論上到達しないが、念のため最後を返す */
-    return &inds[population - 1];
+    return best ? best : &inds[0];
 }
 
 
 
-//次世代を生成する（ルーレット選択 + conflictFlags 交叉 + mutation）
-void generate_next_generation(Generation *nextGen,
-                              const Generation *curGen,
-                              const GraphStructure *graph)
+static void prepare_child(Individual *child, int length)
 {
-    nextGen->generationIndex = curGen->generationIndex + 1;
+    child->chromosomeLength = length;
 
-    for (int islandIdx = 0; islandIdx < curGen->numberOfIslands; islandIdx++) {
+    free(child->colorChromosome);
+    child->colorChromosome = malloc(sizeof(int) * length);
+    if (child->colorChromosome == NULL) {
+        exit(EXIT_FAILURE);
+    }
 
-        const Island *parentIsland = &curGen->islands[islandIdx];
-        Island *childIsland       = &nextGen->islands[islandIdx];
+    free(child->conflictFlags);
+    child->conflictFlags = NULL; // calculate_penalty() が再確保する
+}
 
-        Individual *parents  = parentIsland->individuals;
-        Individual *children = childIsland->individuals;
+//複数交差点で交叉する数
+#define MULTI_CROSSOVER_POINTS 2
 
-        float bestCost = FLT_MAX;
-        int   bestIdx  = 0;
+// 次世代を生成する（トーナメント選択 + 複数交差点交叉 + mutation）
+void generate_next_generation_island(Island *nextIsland,
+                                     const Island *curIsland,
+                                     const GraphStructure *graph)
+{
+    Individual *parents  = curIsland->individuals;
+    Individual *children = nextIsland->individuals;
 
-        //1. 各 Island 内でルーレット選択しペアを作成 → 交叉
-        for (int k = 0; k < islandPopulation; k += 2) {
+    float bestCost = -FLT_MAX;
+    int   bestIdx  = 0;
 
-            /* 親をルーレット選択（方式A） */
-            Individual *p1 = roulette_select(parents, islandPopulation);
-            Individual *p2 = roulette_select(parents, islandPopulation);
+    // 1. 各 Island 内でトーナメント選択しペアを作成 → 交叉
+    for (int k = 0; k < islandPopulation; k += 2) {
 
-            /* 子供の格納先 */
-            Individual *c1 = &children[k];
-            Individual *c2 = &children[k + 1];
+        // 親をトーナメント選択
+        Individual *p1 = tournament_select(parents, islandPopulation);
+        Individual *p2 = tournament_select(parents, islandPopulation);
 
-            int len = p1->chromosomeLength;
+        // 子供の格納先
+        Individual *c1 = &children[k];
+        Individual *c2 = &children[k + 1];
 
-            /* 子個体のメモリ確保 */
-            c1->chromosomeLength = len;
-            c2->chromosomeLength = len;
+        int len = p1->chromosomeLength;
 
-            c1->colorChromosome = malloc(sizeof(int) * len);
-            c2->colorChromosome = malloc(sizeof(int) * len);
-            c1->conflictFlags   = malloc(sizeof(int) * len);
-            c2->conflictFlags   = malloc(sizeof(int) * len);
+        prepare_child(c1, len);
+        prepare_child(c2, len);
 
-            if (!c1->colorChromosome || !c2->colorChromosome ||
-                !c1->conflictFlags   || !c2->conflictFlags) {
-                exit(EXIT_FAILURE);
+        //交叉を行うか判定
+        if ((double)rand() / RAND_MAX < crossoverRate && len > 1) {
+
+            int cutCount = len - 1;
+            if (cutCount > MULTI_CROSSOVER_POINTS) {
+                cutCount = MULTI_CROSSOVER_POINTS;
             }
 
-            //交叉を行うか判定
-            if ((double)rand() / RAND_MAX < crossoverRate) {
-
-                /* 一旦コピー */
-                for (int v = 0; v < len; v++) {
-                    c1->colorChromosome[v] = p1->colorChromosome[v];
-                    c2->colorChromosome[v] = p2->colorChromosome[v];
-                }
-
-                /* conflictFlags に応じて修正する交叉 */
-                for (int v = 0; v < len; v++) {
-                    if (p1->conflictFlags[v]) {
-                        c1->colorChromosome[v] = p2->colorChromosome[v];
+            int cutPoints[MULTI_CROSSOVER_POINTS] = {0};
+            for (int cp = 0; cp < cutCount; cp++) {
+                int cut;
+                int duplicate;
+                do {
+                    cut = rand() % (len - 1) + 1; // 1..len-1
+                    duplicate = 0;
+                    for (int prev = 0; prev < cp; prev++) {
+                        if (cutPoints[prev] == cut) {
+                            duplicate = 1;
+                            break;
+                        }
                     }
-                    if (p2->conflictFlags[v]) {
+                } while (duplicate);
+                cutPoints[cp] = cut;
+            }
+
+            // ソート（挿入法で十分）
+            for (int cp = 1; cp < cutCount; cp++) {
+                int key = cutPoints[cp];
+                int j = cp - 1;
+                while (j >= 0 && cutPoints[j] > key) {
+                    cutPoints[j + 1] = cutPoints[j];
+                    j--;
+                }
+                cutPoints[j + 1] = key;
+            }
+
+            int prevIndex = 0;
+            int takeFromP1 = 1;
+            for (int seg = 0; seg <= cutCount; seg++) {
+                int end = (seg == cutCount) ? len : cutPoints[seg];
+                for (int v = prevIndex; v < end; v++) {
+                    if (takeFromP1) {
+                        c1->colorChromosome[v] = p1->colorChromosome[v];
+                        c2->colorChromosome[v] = p2->colorChromosome[v];
+                    } else {
+                        c1->colorChromosome[v] = p2->colorChromosome[v];
                         c2->colorChromosome[v] = p1->colorChromosome[v];
                     }
                 }
-
-            } else {
-                /* 交叉なし → 親をそのままコピー */
-                for (int v = 0; v < len; v++) {
-                    c1->colorChromosome[v] = p1->colorChromosome[v];
-                    c2->colorChromosome[v] = p2->colorChromosome[v];
-                }
+                takeFromP1 = !takeFromP1;
+                prevIndex = end;
             }
 
-            /* ★修正（問題1）：交叉直後の conflictFlags を確定させる */
-            calculate_penalty(graph, c1);
-            calculate_penalty(graph, c2);
+        } else {
+            // 交叉なし → 親をそのままコピー
+        for (int v = 0; v < len; v++) {
+            c1->colorChromosome[v] = p1->colorChromosome[v];
+            c2->colorChromosome[v] = p2->colorChromosome[v];
+        }
         }
 
-
-        // 2. mutation（突然変異：swap）
-        for (int j = 0; j < islandPopulation; j++) {
-
-            Individual *ind = &children[j];
-            int len = ind->chromosomeLength;
-
-            if ((double)rand() / RAND_MAX < mutationRate) {
-
-                int a = rand() % len;
-                int b = rand() % len;
-
-                int tmp = ind->colorChromosome[a];
-                ind->colorChromosome[a] = ind->colorChromosome[b];
-                ind->colorChromosome[b] = tmp;
-            }
-
-            /* ★修正（問題1）：mutation 後の conflictFlags 再更新 */
-            calculate_penalty(graph, ind);
-        }
-
-
-        //3. 評価（fitnessScore / coloringCost / islandBest）
-        for (int j = 0; j < islandPopulation; j++) {
-
-            Individual *ind = &children[j];
-
-            normalize_chromosome_labels(ind);
-            ind->fitnessScore = evaluate_color_variety_fitness(ind);
-
-            int penalty = calculate_penalty(graph, ind);
-            if (penalty < 0) exit(EXIT_FAILURE);
-
-            float denom = (float)(ind->fitnessScore + penalty);
-            if (denom <= 0.0f) denom = 1.0f;
-
-            ind->coloringCost = 1.0f / denom;
-
-            if (ind->coloringCost < bestCost) {
-                bestCost = ind->coloringCost;
-                bestIdx  = j;
-            }
-        }
-
-        /* ★修正（問題2）：deep copy により island best を確保 */
-        copy_individual(&childIsland->islandBestIndividual,
-                        &children[bestIdx]);
+        // 交叉後に conflictFlags を更新
+        calculate_penalty(graph, c1);
+        calculate_penalty(graph, c2);
     }
 
 
-    //4. global best 個体の決定（deep copy）
-    float globalBestCost   = FLT_MAX;
-    int   globalBestIsland = 0;
+    // 2. mutation（突然変異：swap）
+    for (int j = 0; j < islandPopulation; j++) {
 
-    for (int i = 0; i < nextGen->numberOfIslands; i++) {
+        Individual *ind = &children[j];
+        int len = ind->chromosomeLength;
 
-        if (nextGen->islands[i].islandBestIndividual.coloringCost < globalBestCost) {
-            globalBestCost   = nextGen->islands[i].islandBestIndividual.coloringCost;
-            globalBestIsland = i;
+        if ((double)rand() / RAND_MAX < mutationRate) {
+
+            int a = rand() % len;
+            int b = rand() % len;
+
+            int tmp = ind->colorChromosome[a];
+            ind->colorChromosome[a] = ind->colorChromosome[b];
+            ind->colorChromosome[b] = tmp;
+        }
+
+        // 突然変異後に conflictFlags を更新
+        calculate_penalty(graph, ind);
+    }
+
+
+    //3. 評価（fitnessScore / coloringCost / islandBest）
+    for (int j = 0; j < islandPopulation; j++) {
+
+        Individual *ind = &children[j];
+
+        normalize_chromosome_labels(ind);
+        evaluate_color_variety_fitness(ind);
+
+        int penalty = calculate_penalty(graph, ind);
+        if (penalty < 0) exit(EXIT_FAILURE);
+
+        float denom = (float)(ind->fitnessScore + penalty);
+        if (denom <= 0.0f) denom = 1.0f;
+
+        ind->coloringCost = 1.0f / denom;
+
+        if (ind->coloringCost > bestCost) {
+            bestCost = ind->coloringCost;
+            bestIdx  = j;
         }
     }
 
-    copy_individual(&nextGen->globalBestIndividual,
-                    &nextGen->islands[globalBestIsland].islandBestIndividual);
+    // deep copy で島内最良を保存
+    copy_individual(&nextIsland->islandBestIndividual,
+                    &children[bestIdx]);
 }
