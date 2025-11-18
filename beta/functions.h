@@ -18,5 +18,8 @@ void generate_next_generation_island(
     const GraphStructure *graph); // 次世代の生成関数
 void migrate(Generation *gen);// 島間移民関数
 void update_global_best(Generation *gen); // グローバルベスト更新関数
+void run_generations(Generation *currentGen,
+                    Generation *nextGen,
+                    GraphStructure *graph);
 
 #endif

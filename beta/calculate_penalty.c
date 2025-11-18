@@ -5,7 +5,7 @@
 int calculate_penalty(const GraphStructure *graph, Individual *individual)
 {
     int illegalPairAmount = 0;
-    const int discountRate = 2;
+    const int discountRate = 4; // 元論文からいじった。元は2
     int numVertices = graph->numberOfVertices;
 
     int *colors = individual->colorChromosome;

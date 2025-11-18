@@ -14,7 +14,7 @@ void migrate(Generation *gen)
         //1. 送り元が 5 個体をランダム選択
         Individual *selected[10];
 
-        for (int m = 0; m < 5; m++) {
+        for (int m = 0; m < 10; m++) {
             int idx = rand() % islandPopulation;
             selected[m] = &senderIsland->individuals[idx];
         }
@@ -28,7 +28,7 @@ void migrate(Generation *gen)
             Island *recvIsland = &gen->islands[receiver];
 
             // 受け取り 5 個体分
-            for (int m = 0; m < 5; m++) {
+            for (int m = 0; m < 10; m++) {
 
                 // 上書き先のランダムな位置（0〜pop-1）
                 int dstIdx = rand() % islandPopulation;
