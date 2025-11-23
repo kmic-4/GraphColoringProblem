@@ -21,5 +21,6 @@ void update_global_best(Generation *gen); // グローバルベスト更新関�
 void run_generations(Generation *currentGen,
                     Generation *nextGen,
                     GraphStructure *graph);
+void append_generation_result_to_csv(FILE *fp, int generationIndex, int fitnessScore, float coloringCost); // CSV出力関数
 
 #endif

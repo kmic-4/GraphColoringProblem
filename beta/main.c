@@ -7,7 +7,7 @@
 #include "generation_memory.h"
 #include "setup.h"
 
-double mutationRate = 0.0;
+double mutationRate = 0.0; //　依存注入的な、実体の生成
 double crossoverRate = 0.0;
 int islandPopulation = 0;
 int numberOfIslands = 0;
@@ -18,6 +18,15 @@ void run_generations(Generation *currentGen,
                      GraphStructure *graph)
 {
     generate_first_generation(currentGen, graph, REQUIRED_COLORS_FOR_SUCCESS);
+
+    //~ CSVファイルを書き込みモードでオープン
+    FILE *csvFp = fopen("generation_stats.csv", "w");
+    if (csvFp != NULL) {
+        //~ ヘッダー行を出力
+        fprintf(csvFp, "Generation,FitnessScore,ColoringCost\n");
+    } else {
+        fprintf(stderr, "Warning: Could not open generation_stats.csv for writing.\n");
+    }
 
     // 並列設定
     omp_set_num_threads(8);
@@ -41,6 +50,14 @@ void run_generations(Generation *currentGen,
             nextGen->generationIndex,
             nextGen->globalBestIndividual.fitnessScore,
             nextGen->globalBestIndividual.coloringCost);
+        
+        //~ CSVファイルへ現在の世代の統計情報を出力
+        if (csvFp != NULL) {
+            append_generation_result_to_csv(csvFp,
+                nextGen->generationIndex,
+                nextGen->globalBestIndividual.fitnessScore,
+                nextGen->globalBestIndividual.coloringCost);
+        }
 
         fflush(stdout);
 
@@ -58,6 +75,11 @@ void run_generations(Generation *currentGen,
         Generation tmp = *currentGen;
         *currentGen = *nextGen;
         *nextGen = tmp;
+    }
+
+    //~ CSVファイルをクローズ
+    if (csvFp != NULL) {
+        fclose(csvFp);
     }
 }
 

@@ -3,7 +3,7 @@
 #include "functions.h"
 #include "definition.h"
 
-// 個体を深くコピー
+// ポインタの値をコピーするのではなく、値渡しでコピーを作成
 void copy_individual(Individual *dst, const Individual *src)
 {
     if (dst == NULL || src == NULL) {
