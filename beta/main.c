@@ -20,10 +20,10 @@ void run_generations(Generation *currentGen,
 {
     generate_first_generation(currentGen, graph, REQUIRED_COLORS_FOR_SUCCESS);
 
-    //~ CSVファイルを書き込みモードでオープン
+    // CSVファイルを書き込みモードでオープン
     FILE *csvFp = fopen("generation_stats.csv", "w");
     if (csvFp != NULL) {
-        //~ ヘッダー行を出力
+        // ヘッダー行を出力
         fprintf(csvFp, "Generation,ColoringCost,Iterations\n");
     } else {
         fprintf(stderr, "Warning: Could not open generation_stats.csv for writing.\n");
@@ -52,7 +52,7 @@ void run_generations(Generation *currentGen,
             nextGen->globalBestIndividual.coloringCost,
             iterationsNumber);
         
-        //~ CSVファイルへ現在の世代の統計情報を出力
+        // CSVファイルへ現在の世代の統計情報を出力
         if (csvFp != NULL) {
             append_generation_result_to_csv(csvFp,
                 nextGen->generationIndex,
@@ -78,7 +78,7 @@ void run_generations(Generation *currentGen,
         *nextGen = tmp;
     }
 
-    //~ CSVファイルをクローズ
+    // CSVファイルをクローズ
     if (csvFp != NULL) {
         fclose(csvFp);
     }

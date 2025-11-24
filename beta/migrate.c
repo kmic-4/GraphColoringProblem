@@ -12,7 +12,7 @@ void migrate(Generation *generation)
     // Generation構造体のnumberOfIslandsメンバから島の総数を取得。
     int islandCount = generation->numberOfIslands;
 
-    // 【重要】移住処理前に全島の最良個体を一時保存
+    // 移住処理前に全島の最良個体を一時保存
     // 理由: forループ内で他島の最良個体が上書きされる前に、全島の「移住前の」最良個体を保存する必要がある。
     // そうしないと、island[0]の最良個体がisland[1]に送られた際にisland[1]の最良個体位置を上書きし、
     // その後island[1]が送り元になった時に「既に上書きされた個体」を他島に送ってしまう可能性がある。
