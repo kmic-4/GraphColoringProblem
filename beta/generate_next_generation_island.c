@@ -36,7 +36,7 @@ static Individual* roulette_select(Individual *inds, int population)
     return &inds[population - 1];
 }
 
-#define TOURNAMENT_SIZE 3
+
 
 static void prepare_child(Individual *child, int length)
 {
