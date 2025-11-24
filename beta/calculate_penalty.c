@@ -11,6 +11,7 @@
 // 戻り値: 計算されたペナルティ値（int）。衝突がない場合は0。
 int calculate_penalty(const GraphStructure *graph, Individual *individual)
 {
+    iterationsNumber++;
     int illegalPairAmount = 0;
     // const int discountRate = 4; // 元論文からいじった。元は2
     const int discountRate = 2; // algorithm.md準拠に戻す

@@ -9,6 +9,7 @@ extern double crossoverRate;
 extern int islandPopulation; // 島ごとの個体数。偶数であること。
 extern int numberOfIslands;
 extern int maxGenerations;
+extern int iterationsNumber;
 
 // グラフ構造
 typedef struct {
@@ -27,7 +28,7 @@ typedef struct {
     int conflictPairCount;
 } Individual;
 
-// Island（サブポピュレーション）
+// 島一つ分
 typedef struct {
     Individual *individuals;          // islandPopulation 個
     Individual islandBestIndividual;  // 最良個体

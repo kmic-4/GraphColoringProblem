@@ -165,9 +165,16 @@ void generate_next_generation_island(Island *nextIsland,
 
         if ((double)rand() / RAND_MAX < mutationRate) {
 
+            // 異なる2つの頂点を選択（algorithm.md準拠）
             int a = rand() % len;
-            int b = rand() % len;
+            int b;
+            
+            // aと異なるbを選ぶ（len >= 2を前提）
+            do {
+                b = rand() % len;
+            } while (b == a && len > 1);
 
+            // 2頂点の色を入れ替え（転置: Transposition）
             int tmp = ind->colorChromosome[a];
             ind->colorChromosome[a] = ind->colorChromosome[b];
             ind->colorChromosome[b] = tmp;

@@ -7,12 +7,12 @@
 //~
 //~ 引数 fp: 書き込み先のファイルポインタ（FILE*）。"a" または "w" モードでオープンされていること。
 //~ 引数 generationIndex: 現在の世代番号（int）。
-//~ 引数 fitnessScore: 最良個体の適応度（int）。使用色数に相当。
 //~ 引数 coloringCost: 最良個体のコスト値（float）。
-void append_generation_result_to_csv(FILE *fp, int generationIndex, int fitnessScore, float coloringCost)
+//~ 引数 iterationsNumber: 探索回数（int）。
+void append_generation_result_to_csv(FILE *fp, int generationIndex, float coloringCost, int iterationsNumber)
 {
     if (fp == NULL) {
         return;
     }
-    fprintf(fp, "%d,%d,%f\n", generationIndex, fitnessScore, coloringCost);
+    fprintf(fp, "%d,%f,%d\n", generationIndex, coloringCost, iterationsNumber);
 }

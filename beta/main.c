@@ -12,6 +12,7 @@ double crossoverRate = 0.0;
 int islandPopulation = 0;
 int numberOfIslands = 0;
 int maxGenerations = 0;
+int iterationsNumber = 0;
 
 void run_generations(Generation *currentGen,
                      Generation *nextGen,
@@ -23,7 +24,7 @@ void run_generations(Generation *currentGen,
     FILE *csvFp = fopen("generation_stats.csv", "w");
     if (csvFp != NULL) {
         //~ ヘッダー行を出力
-        fprintf(csvFp, "Generation,FitnessScore,ColoringCost\n");
+        fprintf(csvFp, "Generation,ColoringCost,Iterations\n");
     } else {
         fprintf(stderr, "Warning: Could not open generation_stats.csv for writing.\n");
     }
@@ -46,17 +47,17 @@ void run_generations(Generation *currentGen,
 
         update_global_best(nextGen);
 
-        printf("Generation %d | FitnessScore=%d | ColoringCost=%f\n",
+        printf("Generation %d | ColoringCost=%f | Iterations=%d\n",
             nextGen->generationIndex,
-            nextGen->globalBestIndividual.fitnessScore,
-            nextGen->globalBestIndividual.coloringCost);
+            nextGen->globalBestIndividual.coloringCost,
+            iterationsNumber);
         
         //~ CSVファイルへ現在の世代の統計情報を出力
         if (csvFp != NULL) {
             append_generation_result_to_csv(csvFp,
                 nextGen->generationIndex,
-                nextGen->globalBestIndividual.fitnessScore,
-                nextGen->globalBestIndividual.coloringCost);
+                nextGen->globalBestIndividual.coloringCost,
+                iterationsNumber);
         }
 
         fflush(stdout);
@@ -103,6 +104,8 @@ int main(int argc, char *argv[])
     free_generation(&currentGen);
     free_generation(&nextGen);
     free_graph(graph);
+
+    printf("Total iterations: %d\n", iterationsNumber);
 
     return 0;
 }
