@@ -10,8 +10,7 @@ void evaluate_color_variety_fitness(Individual *individual) {
     int length = individual->chromosomeLength;
     int *chrom = individual->colorChromosome;
 
-    // 色種の最大値は頂点数以下であるため、
-    // 頂点数（=length）を上限とした簡易フラグ配列を用いる
+    // 色種の最大値は頂点数以下であるため、頂点数（length）を上限とした簡易フラグ配列を用いる
     int *appeared = (int *)calloc(length + 1, sizeof(int));
     if (appeared == NULL) {
         return;  // メモリ確保失敗時はスキップ
@@ -22,7 +21,7 @@ void evaluate_color_variety_fitness(Individual *individual) {
     for (int i = 0; i < length; i++) {
         int color = chrom[i];
 
-        // 初登場の色 → カウント
+        // 初登場の色ならカウント
         if (appeared[color] == 0) {
             appeared[color] = 1;
             varietyCount++;

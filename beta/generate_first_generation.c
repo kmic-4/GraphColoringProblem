@@ -24,47 +24,47 @@ void generate_first_generation(Generation *gen,
 
             Individual *ind = &inds[j];
 
-            // 1. 遺伝子長を決定
+            // 遺伝子長を決定
             ind->chromosomeLength = graph->numberOfVertices;
 
-            // 2. colorChromosome を確保
+            // colorChromosome を確保
             ind->colorChromosome =
                 (int *)malloc(sizeof(int) * ind->chromosomeLength);
 
             if (ind->colorChromosome == NULL) {
-                // 致命的エラー
+                // 致命的エラーが起こった場合は即座に終了
                 exit(EXIT_FAILURE);
             }
 
-            // 3. 乱数で初期彩色
+            // 乱数で初期彩色
             for (int v = 0; v < ind->chromosomeLength; v++) {
                 ind->colorChromosome[v] = rand() % numberOfColor;
             }
 
-            // 4. ラベルを正規化
+            // ラベルを正規化
             normalize_chromosome_labels(ind);
 
-            // 5. fitnessScore を計算
+            // fitnessScore を計算
             evaluate_color_variety_fitness(ind);
 
-            // 6. ペナルティを計算
+            // ペナルティを計算
             int penalty = calculate_penalty(graph, ind);
             if (penalty < 0) {
                 // realloc エラーなど
                 exit(EXIT_FAILURE);
             }
 
-            // 7. coloringCost を計算（逆数）
+            // coloringCost を計算
             float denom = (float)(ind->fitnessScore + penalty);
 
-            // 0除算対策（念のため）
+            // 0除算によるエラーを防ぐ
             if (denom <= 0.0f) {
                 denom = 1.0f;
             }
 
             ind->coloringCost = 1.0f / denom;
 
-            // 8. 島内最良を更新
+            // 島内最良を更新
             if (ind->coloringCost > bestCost) {
                 bestCost = ind->coloringCost;
                 bestIdx = j;

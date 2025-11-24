@@ -11,7 +11,6 @@ void normalize_chromosome_labels(Individual *individual) {
     int length = individual->chromosomeLength;
     int *chrom = individual->colorChromosome;
 
-    // ラベルマッピング表（元ラベル → 新ラベル）
     // 頂点数が色ラベルの上限になるので十分大きい配列を確保可能
     int *labelMap = (int *)calloc(length + 1, sizeof(int));
     if (labelMap == NULL) {

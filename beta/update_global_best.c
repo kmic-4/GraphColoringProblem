@@ -16,7 +16,7 @@ void update_global_best(Generation *gen)
         }
     }
 
-    // deep copy で保存
+    // 保存
     copy_individual(&gen->globalBestIndividual,
                     &gen->islands[bestIsland].islandBestIndividual);
 }
