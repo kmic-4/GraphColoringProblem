@@ -38,10 +38,12 @@ void run_generations(Generation *currentGen,
 
         #pragma omp parallel for
         for (int i = 0; i < numberOfIslands; i++) {
+            unsigned int seed = (unsigned int)(i + gen * numberOfIslands); 
             generate_next_generation_island(
                 &nextGen->islands[i],
                 &currentGen->islands[i],
-                graph
+                graph,
+                &seed
             );
         }
 

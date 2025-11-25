@@ -12,10 +12,10 @@ void copy_individual(Individual *dst, const Individual *src);
 void generate_first_generation(Generation *gen,
                              const GraphStructure *graph,
                              int numberOfColor); // 第一世代の生成関数
-void generate_next_generation_island(
-    Island *nextIsland,
-    const Island *curIsland,
-    const GraphStructure *graph); // 次世代の生成関数
+void generate_next_generation_island(Island *nextIsland,
+                                     const Island *currentIsland,
+                                     const GraphStructure *graph,
+                                     unsigned int *seed); // 次世代の生成関数
 void migrate(Generation *gen);// 島間移民関数
 void update_global_best(Generation *gen); // グローバルベスト更新関数
 void run_generations(Generation *currentGen,

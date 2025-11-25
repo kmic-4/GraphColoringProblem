@@ -7,6 +7,7 @@
 // 衝突数に応じてペナルティスコアを計算し、同時に個体内の衝突フラグを更新する。
 int calculate_penalty(const GraphStructure *graph, Individual *individual)
 {
+    #pragma omp atomic
     iterationsNumber++;
     int illegalPairAmount = 0;
     

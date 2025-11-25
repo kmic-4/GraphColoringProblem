@@ -6,7 +6,7 @@
 
 // ルーレット選択 (Roulette Selection)
 // 適応度（coloringCost）に比例した確率で個体を選択する
-static Individual* roulette_select(Individual *inds, int population)
+static Individual* roulette_select(Individual *inds, int population, unsigned int *seed)
 {
     double sum = 0.0;
 
@@ -18,10 +18,10 @@ static Individual* roulette_select(Individual *inds, int population)
     }
 
     if (sum <= 0.0) {
-        return &inds[rand() % population];
+        return &inds[rand_r(seed) % population];
     }
 
-    double r = ((double)rand() / RAND_MAX) * sum;
+    double r = ((double)rand_r(seed) / RAND_MAX) * sum;
 
     double acc = 0.0;
     for (int i = 0; i < population; i++) {
@@ -57,7 +57,8 @@ static void prepare_child(Individual *child, int length)
 //  currentIsland: 現世代の島データ（const Island*）。ここから親が選ばれる。
 void generate_next_generation_island(Island *nextIsland,
                                      const Island *currentIsland,
-                                     const GraphStructure *graph)
+                                     const GraphStructure *graph,
+                                     unsigned int *seed)
 {
     // Island構造体のindividualsメンバにアクセス。個体群配列の先頭ポインタを取得。
     Individual *parents  = currentIsland->individuals;
@@ -70,8 +71,8 @@ void generate_next_generation_island(Island *nextIsland,
 
         // 親をルーレット選択
         // roulette_select関数を呼び出し、親となるIndividualへのポインタを取得。
-        Individual *p1 = roulette_select(parents, islandPopulation);
-        Individual *p2 = roulette_select(parents, islandPopulation);
+        Individual *p1 = roulette_select(parents, islandPopulation, seed);
+        Individual *p2 = roulette_select(parents, islandPopulation, seed);
 
         // 子供の格納先
         Individual *c1 = &children[k];
@@ -84,7 +85,7 @@ void generate_next_generation_island(Island *nextIsland,
         prepare_child(c2, len);
 
         // 交叉を行うか判定
-        if ((double)rand() / RAND_MAX < crossoverRate) {
+        if ((double)rand_r(seed) / RAND_MAX < crossoverRate) {
             
             // Individual構造体のcolorChromosomeにアクセスし、ベースとなる親の遺伝子をコピー
             for (int i = 0; i < len; i++) {
@@ -126,15 +127,15 @@ void generate_next_generation_island(Island *nextIsland,
         Individual *ind = &children[j];
         int len = ind->chromosomeLength;
 
-        if ((double)rand() / RAND_MAX < mutationRate) {
+        if ((double)rand_r(seed) / RAND_MAX < mutationRate) {
 
             // 異なる2つの頂点を選択
-            int a = rand() % len;
+            int a = rand_r(seed) % len;
             int b;
             
             // aと異なるbを選ぶ
             do {
-                b = rand() % len;
+                b = rand_r(seed) % len;
             } while (b == a && len > 1);
 
             // 2頂点の色を入れ替え
